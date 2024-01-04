@@ -9,8 +9,10 @@
 int main(int argc, char **argv)
 {
 	(void)argc,(void)argv;
-	char *td_buf = NULL, *td_token;
-	size_t td_counter = 0, ssize_t td_reader;
+	char *td_buf = NULL;
+	char *td_token;
+	size_t td_counter = 0;
+	ssize_t td_reader;
 	pid_t _tdchild_id;
 	int d, td_status;
 	char **tdarray;
@@ -18,7 +20,7 @@ int main(int argc, char **argv)
 	while(1)
 	{
 		write(STDOUT_FILENO, "tdShell$", 9);
-		td_reader getline(&td_buf, &td_counter, stdin);
+		td_reader = getline(&td_buf, &td_counter, stdin);
 
 		if(td_reader == -1)
 		{
@@ -33,7 +35,7 @@ int main(int argc, char **argv)
 		while(td_token)
 		{
 			tdarray[d] = td_token;
-			td_token strtok(NULL, "\n");
+			td_token = strtok(NULL, "\n");
 			d++;
 		}
 		tdarray[d] = NULL;
