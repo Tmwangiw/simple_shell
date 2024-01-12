@@ -1,64 +1,88 @@
 #include "shell.h"
-/*
- * main - UNIX command line interpreter
- * @argc: counter
- * @argv: vector
- *
- * Return: On success, 0, otherwise, error message
+
+int status = 0;
+
+int lineNumber = 1;
+
+char *nameOfShell = NULL;
+
+/**
+ * main - runs the core logic of the shell
+ * @argc: argc, number of cmd arguments
+ * @argv: argv, array of cmd arguements
+ * Return: status code 0
  */
-int main(int argc, char **argv)
+
+int main(__attribute__((unused))int argc, char **argv)
 {
-	(void)argc,(void)argv;
-	char *td_buf = NULL;
-	char *td_token;
-	size_t td_counter = 0;
-	ssize_t td_reader;
-	pid_t _tdchild_id;
-	int d, td_status;
-	char **tdarray;
+	int numberOfBytesRead;
+	int separation = NEGATIVE;
+	int i;
+	size_t sizeOfBuffer = 1;
+	char *buffer = NULL;
+	char *bufferPointer;
+	char *temporaryBuffer;
+	char **arguements = NULL;
 
-	while(1)
+	nameOfShell = copyString(*argv);
+
+	environ = duplicateArray(environ, lengthOfList(environ, NULL));
+
+	signal(SIGINT, SIG_IGN);
+
+	buffer = malloc(1);
+	if (buffer == NULL)
+		exit(EXIT_FAILURE);
+
+	while (1)
 	{
-		write(STDOUT_FILENO, "tdShell$", 9);
-		td_reader = getline(&td_buf, &td_counter, stdin);
+		if (separation == NEGATIVE)
+		{
+			if (isatty(STDIN_FILENO) == 1)
+				write(STDOUT_FILENO, "alx_shell$ ", 11);
 
-		if(td_reader == -1)
-		{
-			perror("Leaving shell ...");
-			exit() /*we'll deal with error handling*/
-		}
-		
-		td_token = strtok(td_buf, "\n");
-		tdarray = malloc(sizeof(char *) * 1024);
-		d = 0;
-		
-		while(td_token)
-		{
-			tdarray[d] = td_token;
-			td_token = strtok(NULL, "\n");
-			d++;
-		}
-		tdarray[d] = NULL;
+			numberOfBytesRead = getline(&buffer, &sizeOfBuffer, stdin);
 
-		_tdchild_id = fork();
-		if(_tdchild_id == -1)
-		{
-			perror("Creation failure");
-			exit()
-		}
-		if(_tdchild_id == 0)
-		{
-			if(execve(tdarray[0], tdarray, NULL) == -1)
+			if (numberOfBytesRead == -1)
+				break;
+			if (numberOfBytesRead == 1)
 			{
-				perror("Execution failure");
-				exit();
+				lineNumber++;
+				continue;
 			}
+			buffer[numberOfBytesRead - 1] = '\0';
+			buffer = inputCleaner(buffer, &sizeOfBuffer);
+			if (sizeOfBuffer == 0)
+			{
+				lineNumber++;
+				continue;
+			}
+			bufferPointer = buffer;
 		}
 		else
-		{
-			wait(&td_status);
-		}
+			bufferPointer = temporaryBuffer;
+
+		temporaryBuffer = NULL;
+		arguements = createArray(bufferPointer, ' ', &temporaryBuffer);
+		if (temporaryBuffer != NULL)
+			separation = POSITIVE;
+		else
+			separation = NEGATIVE;
+
+		i = commandRuntimeHandler(arguements);
+
+		free(arguements);
+
+		if (separation == NEGATIVE)
+			lineNumber++;
+
+		if (i == TERMINATE_PROCESS_EXECUTION)
+			break;
 	}
-	free(td_buf);
-	return(0);
+	free(buffer);
+	commandAliasProcessing(NULL, POSITIVE);
+	releaseArray(environ);
+	free(nameOfShell);
+
+	return (status % 256);
 }
