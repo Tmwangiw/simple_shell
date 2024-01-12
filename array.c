@@ -1,129 +1,83 @@
 #include "shell.h"
-
-int status;
-
 /**
- * duplicateArray - duplicates an array
- * @previousArray: the array to duplicate
- * @createdArraySize: new array size
- *
- * Return: the new array
+ * arr_size - finds size of array
+ * @arr: array of pointers to strings
+ * Return: size of the array
  */
-char **duplicateArray(char **previousArray, int createdArraySize)
+int arr_size(char **arr)
 {
-	char **createdArray = NULL;
-	char **arrayPointer;
+	int i;
 
-	createdArray = malloc(sizeof(char **) * createdArraySize);
-
-	arrayPointer = createdArray;
-	while (*previousArray != NULL)
-	{
-		*arrayPointer = copyString(*previousArray);
-		arrayPointer++;
-		previousArray++;
-	}
-	*arrayPointer = NULL;
-
-	return (createdArray);
+	if (arr == NULL || *arr == NULL)
+		return (-1);
+	i = 0;
+	while (arr[i])
+		i++;
+	return (i);
 }
-
 /**
- * releaseArray - releases resources used by 2D array
- * @arguements: the array to release
- *
- * Return: POSITIVE
+ * array_to_list - builds a linked list of array of pointers
+ * @array: array of pointers to strings
+ * Return: pointer to head
  */
-int releaseArray(char **arguements)
+list_t *array_to_list(char **array)
 {
-	char **pointer = arguements;
+	list_t *head;
+	list_t *new;
+	int i;
 
-	while (*pointer != NULL)
+	head = NULL;
+	for (i = 0; array[i] != NULL; i++)
 	{
-		free(*pointer);
-		pointer++;
-	}
-
-	free(arguements);
-
-	return (POSITIVE);
-}
-
-/**
- * findArrayElement - find given element in an array
- * @array: array with the element
- * @itemName: element name
- *
- * Return: the array element, or NULL if it is not found
- */
-char *findArrayElement(char **array, char *itemName)
-{
-	while (*array != NULL)
-	{
-		if (compareString(*array, itemName, PREFIX) == POSITIVE)
-			return (*array);
-
-		array++;
-	}
-
-	return (NULL);
-}
-
-/**
- * createArray - create array from buffer
- * @string: the buffer to use
- * @endOfListEntryChar: EOF charcater
- * @ifSemiColonPointer: if the buffer has semicolons, ifSemiColonPointer becomes
- * semicolon
- *
- * Return: a pointer to the array
- */
-char **createArray(char *string, char endOfListEntryChar, char **ifSemiColonPointer)
-{
-	char *stringPointer = string;
-	unsigned int index = 2;
-	char **array = NULL;
-
-	while (*stringPointer != '\0')
-	{
-		if (*stringPointer == ';')
-			break;
-		if (*stringPointer == endOfListEntryChar && *(stringPointer + 1) != '\0')
-			index++;
-
-		stringPointer++;
-	}
-
-	array = malloc(index * sizeof(char **));
-	if (array == NULL)
-		exit(EXIT_FAILURE);
-
-	array[0] = string;
-	stringPointer = string;
-	index = 1;
-
-	while (*stringPointer != '\0')
-	{
-		if (*stringPointer == endOfListEntryChar)
+		new = add_node_end(&head, array[i]);
+		if (new == NULL)
 		{
-			*stringPointer = '\0';
-			stringPointer++;
-			if (*stringPointer == ';')
-			{
-				array[index] = NULL;
-				if (*(stringPointer + 1) != '\0' && *(stringPointer + 2) != '\0')
-					*ifSemiColonPointer = stringPointer + 2;
-				break;
-			}
-			if (*stringPointer != '\0')
-			{
-				array[index] = stringPointer;
-				index++;
-			}
+			free_list(head);
+			return (NULL);
 		}
-		stringPointer++;
 	}
-	array[index] = NULL;
+	return (head);
+}
+/**
+ * list_to_array - builds an array of pointers from linked list
+ * @head: head pointer of the list
+ * Return: pointer to array of pointers
+ */
+char **list_to_array(list_t **head)
+{
+	size_t len, i;
+	list_t *tmp;
+	char **array;
 
+	len = list_len(*head);
+	array = malloc(sizeof(char *) * (len + 1));
+	if (array == NULL)
+		return (NULL);
+	tmp = *head;
+	for (i = 0; i < len; i++)
+	{
+		array[i] = tmp->str;
+		tmp = tmp->next;
+	}
+	array[i] = NULL;
 	return (array);
+}
+/**
+ * free_array - frees a 2D array
+ * @array: array to free
+ * Return: none
+ */
+void free_array(char **array)
+{
+	int i, size;
+
+	size = arr_size(array);
+	if (*array == NULL || array == NULL)
+		return;
+	for (i = 0; i < size; i++)
+	{
+		if (array[i] != NULL)
+			free(array[i]);
+	}
+	free(array);
 }
