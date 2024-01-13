@@ -1,0 +1,12 @@
+#include "shell.h"
+/**
+ * main - Program entry point
+ *
+ * Return: On success, 0.
+ */
+int main(void)
+{
+	printf("Oh darling, all the magic is within you\n");
+	
+	return (0);
+}
