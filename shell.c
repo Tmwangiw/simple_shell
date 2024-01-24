@@ -1,64 +1,24 @@
 #include "shell.h"
-/*
- * main - UNIX command line interpreter
- * @argc: counter
- * @argv: vector
- *
- * Return: On success, 0, otherwise, error message
+/**
+ * main - Entry Point to Shell
+ * Return: Always 0 on success
  */
-int main(int argc, char **argv)
+int main(void)
 {
-	(void)argc,(void)argv;
-	char *td_buf = NULL;
-	char *td_token;
-	size_t td_counter = 0;
-	ssize_t td_reader;
-	pid_t _tdchild_id;
-	int d, td_status;
-	char **tdarray;
+	char *buffer, *line;
+	list_t *env_head;
+	int ret_val;
 
-	while(1)
-	{
-		write(STDOUT_FILENO, "tdShell$", 9);
-		td_reader = getline(&td_buf, &td_counter, stdin);
+	/* create a buffer to store input */
+	buffer = malloc(sizeof(char) * BUFF_SIZE);
+	if (buffer == NULL)
+		return (1);
+	line = NULL;
+	env_head = array_to_list(environ);
+	/* call cmd_line_loop */
+	ret_val = cmd_line_loop(buffer, line, &env_head);
 
-		if(td_reader == -1)
-		{
-			perror("Leaving shell ...");
-			exit() /*we'll deal with error handling*/
-		}
-		
-		td_token = strtok(td_buf, "\n");
-		tdarray = malloc(sizeof(char *) * 1024);
-		d = 0;
-		
-		while(td_token)
-		{
-			tdarray[d] = td_token;
-			td_token = strtok(NULL, "\n");
-			d++;
-		}
-		tdarray[d] = NULL;
-
-		_tdchild_id = fork();
-		if(_tdchild_id == -1)
-		{
-			perror("Creation failure");
-			exit()
-		}
-		if(_tdchild_id == 0)
-		{
-			if(execve(tdarray[0], tdarray, NULL) == -1)
-			{
-				perror("Execution failure");
-				exit();
-			}
-		}
-		else
-		{
-			wait(&td_status);
-		}
-	}
-	free(td_buf);
-	return(0);
+	free_list(env_head);
+	free(buffer);
+	return (ret_val);
 }
